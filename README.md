@@ -1,0 +1,2 @@
+# core
+Admin module
