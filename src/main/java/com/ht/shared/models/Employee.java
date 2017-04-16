@@ -40,6 +40,9 @@ public class Employee implements Serializable {
 	@Column(name = "is_active", nullable = false)
 	private Boolean isActive;
 
+	@Transient
+	private String sessionId;
+
 	public Long getId() {
 		return id;
 	}
@@ -70,6 +73,14 @@ public class Employee implements Serializable {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 
 	@Override

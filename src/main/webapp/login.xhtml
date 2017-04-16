@@ -126,7 +126,7 @@
 																<label class="block clearfix"> <span
 																	class="block input-icon input-icon-right"> <h:inputText
 																			j:placeholder="Username" id="userName-input-id"
-																			value="#{loginBean.systemUser.userName}"
+																			value="#{loginBean.employee.userName}"
 																			required="true"
 																			requiredMessage="#{validation['msg.user.required']}"
 																			styleClass="form-control" tabindex="1" /> <i
@@ -142,7 +142,7 @@
 																<label class="block clearfix"> <span
 																	class="block input-icon input-icon-right"> <h:inputSecret
 																			id="input-psw" j:placeholder="Password"
-																			value="#{loginBean.systemUser.password}"
+																			value="#{loginBean.employee.password}"
 																			styleClass="form-control" required="true"
 																			requiredMessage="#{validation['msg.password.required']}"
 																			tabindex="2" /> <i class="ace-icon fa fa-lock"></i>
@@ -154,13 +154,6 @@
 														<div class="space"></div>
 
 														<div class="clearfix">
-															<ui:remove>
-																<label class="inline"> <h:selectBooleanCheckbox
-																		tabindex="3" value="#{loginBean.rememberMe}"
-																		styleClass="ace" /> <span class="lbl">
-																		Remember Me</span>
-																</label>
-															</ui:remove>
 															<h:commandLink action="#{loginBean.signIn}" value="Login"
 																tabindex="4" id="login-btn-id"
 																styleClass="width-35 pull-right btn btn-sm btn-primary">
@@ -179,110 +172,19 @@
 											</div>
 											<!-- /widget-main -->
 
-											<div class="toolbar clearfix">
-												<div>
-													<!--  <a href="#" data-target="#forgot-box"
-														class="forgot-password-link"> <i
-														class="ace-icon fa fa-arrow-left"></i> I forgot my
-														password
-													</a> -->
-
-													<h:commandLink onclick="test('#forgot-box')"
-														styleClass="forgot-password-link" id="forgetLink">
-														<i class="ace-icon fa fa-arrow-left"></i> I forgot my
-														password
-													<f:ajax listener="#{loginBean.reSetForgetPsw}"
-															render="loginForm:loginForgetUserNameMsg loginForm:loginMsg loginForm:forgetPsw-panel" />
-													</h:commandLink>
-
-												</div>
-
-
-											</div>
 										</div>
 										<!-- /widget-body -->
 									</div>
 									<!-- /login-box -->
 
-									<div id="forgot-box" class="forgot-box widget-box no-border">
-										<div class="widget-body">
-											<div class="widget-main">
-												<h4 class="header red lighter bigger">
-													<i class="ace-icon fa fa-key"></i> Retrieve Password
-												</h4>
-
-												<div class="space-6"></div>
-												<p>Enter your Username to get the password</p>
-
-												<h:messages id="loginForgetUserNameMsg"
-													errorClass="alert alert-danger fade in"
-													infoClass="alert alert-info fade in"
-													warnClass="alert alert-warning fade in" globalOnly="true"
-													style="list-style-type: none" />
-
-												<fieldset>
-													<h:panelGroup id="forgetPsw-panel">
-														<label class="block clearfix"> <span
-															class="block input-icon input-icon-right"> <h:inputText
-																	id="ForgetuserName" j:placeholder="Username"
-																	validatorMessage="Enter a valid Username"
-																	required="true"
-																	requiredMessage="#{validation['msg.user.required']}"
-																	value="#{loginBean.forgotSystemUser.userName}"
-																	autocomplete="off" size="30" styleClass="form-control" />
-																<i class="ace-icon fa fa-envelope"></i>
-														</span> <h:message for="ForgetuserName"
-																styleClass="jsf-error-msg" />
-														</label>
-
-														<div class="clearfix">
-
-															<h:commandLink value="Get Password"
-																id="forget-password-btn"
-																styleClass="width-35 pull-right btn btn-sm btn-danger"
-																action="#{loginBean.forgetPassword}">
-																<i class="bigger-110"></i>
-																<f:ajax execute="loginForm:forgetPsw-panel"
-																	render="loginForm:forgetPsw-panel loginForm:script-panel-id loginForm:loginForgetUserNameMsg" />
-															</h:commandLink>
-
-														</div>
-													</h:panelGroup>
-												</fieldset>
-
-											</div>
-											<!-- /.widget-main -->
-
-											<div class="toolbar center">
-												<a href="#" data-target="#login-box" onclick="backTologIn()"
-													class="back-to-login-link"> Back to login <i
-													class="ace-icon fa fa-arrow-right"></i>
-												</a>
-											</div>
-										</div>
-										<!-- /.widget-body -->
-									</div>
-									<!-- /.forgot-box -->
-
-
+						
 								</div>
-								<!-- /position-relative -->
-
-								<!-- <div class="navbar-fixed-top align-right">
-									<br /> &nbsp; <a id="btn-login-dark" href="#">Dark</a> &nbsp;
-									<span class="blue">/</span> &nbsp; <a id="btn-login-blur"
-										href="#">Blur</a> &nbsp; <span class="blue">/</span> &nbsp; <a
-										id="btn-login-light" href="#">Light</a> &nbsp; &nbsp; &nbsp;
-								</div> -->
-
+								
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-			<h:outputScript>
-				$("#loginForm\\:browser-time-zone").val(moment.tz.guess());
-			</h:outputScript>
 			<h:panelGroup id="script-panel-id">
 				<script type="text/javascript">
 					// ------------ Script for The Enter Key Event ----[STARTS]

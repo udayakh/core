@@ -1,5 +1,6 @@
 package com.ht.admin.mbeans;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -20,242 +21,104 @@ import com.ht.admin.mbeans.utils.LoginUtils;
 import com.ht.admin.mbeans.utils.MessageRender;
 import com.ht.shared.biz.EmployeeService;
 import com.ht.shared.biz.exception.BusinessServiceException;
-import com.ht.shared.models.Employee;	
+import com.ht.shared.models.Employee;
 import com.ht.shared.utils.BaseConstants;
 
 @ManagedBean
 @RequestScoped
 public class LoginBean implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-  private final transient Logger logger = Logger.getLogger(LoginBean.class);
+	private final transient Logger logger = Logger.getLogger(LoginBean.class);
 
-  @ManagedProperty("#{employeeServiceImpl}")
-  private transient EmployeeService employeeService;
+	@ManagedProperty("#{employeeServiceImpl}")
+	private transient EmployeeService employeeService;
+	private Employee employee = new Employee();
+	private boolean multiple;
 
-  private boolean multiple;
-  private Employee systemUser = new Employee();
-  private boolean rememberMe;
-  private String browserTimeZone;
+	public Employee getEmployee() {
+		return employee;
+	}
 
-  @PostConstruct
-  public void init() {
-    doGetUserDetailsFromCookies(getSystemUser());
-  }
+	public void setEmployee(Employee employee) {
+		this.employee = employee;
+	}
 
-  public UserService getUserServiceImpl() {
-    return userServiceImpl;
-  }
+	@PostConstruct
+	public void init() {
+		doGetUserDetailsFromCookies(getEmployeeUser());
+	}
 
-  public void setUserServiceImpl(UserService userServiceImpl) {
-    this.userServiceImpl = userServiceImpl;
-  }
+	private void doGetUserDetailsFromCookies(Employee employeeUser) {
 
-  public SystemUser getSystemUser() {
-    if (systemUser == null) {
-      systemUser = new SystemUser();
-    }
-    return systemUser;
-  }
+		if (employee == null) {
 
-  public void setSystemUser(SystemUser systemUser) {
-    this.systemUser = systemUser;
-  }
+			Map<String, Object> cookieMap = FacesContextUtil.getExternalContext().getRequestCookieMap();
+			if (cookieMap != null) {
+				Cookie nameCookie = (Cookie) cookieMap.get("unername");
+				Cookie pswCookie = (Cookie) cookieMap.get("password");
 
-  public SystemUser getForgotSystemUser() {
-    if (forgotSystemUser == null)
-      forgotSystemUser = new SystemUser();
-    return forgotSystemUser;
-  }
+				employee.setUserName((nameCookie == null || nameCookie.getValue() == null
+						|| nameCookie.getValue().trim().length() == 0) ? null : nameCookie.getValue());
+				employee.setPassword(
+						(pswCookie == null || pswCookie.getValue() == null || pswCookie.getValue().trim().length() == 0)
+								? null : pswCookie.getValue());
+			}
+		}
+	}
 
-  public void setForgotSystemUser(SystemUser forgotSystemUser) {
-    this.forgotSystemUser = forgotSystemUser;
-  }
+	public Employee getEmployeeUser() {
+		if (employee == null) {
+			employee = new Employee();
+		}
+		return employee;
+	}
 
-  public boolean isMultiple() {
-    return multiple;
-  }
+	public void signIn() {
 
-  public void setMultiple(boolean multiple) {
-    this.multiple = multiple;
-  }
+		if (!multiple) {
+			if (getEmployee().getUserName() == null || getEmployee().getUserName().trim().length() == 0) {
+				MessageRender.addWarningMessage("msg.user.required");
+			}
+			if (getEmployee().getPassword() == null || getEmployee().getPassword().trim().length() == 0) {
+				MessageRender.addWarningMessage("msg.password.required");
+			}
 
-  public boolean isRememberMe() {
-    return rememberMe;
-  }
+			if (FacesContextUtil.getFacesContext().getMessageList().isEmpty()) {
+				try {
+					Employee employee = employeeService.doLoginAthenticate(getEmployeeUser());
 
-  public void setRememberMe(boolean rememberMe) {
-    this.rememberMe = rememberMe;
-  }
+					// *** Do the Login Updation in Application File [START]
+					// *****
 
-  public String getBrowserTimeZone() {
-    return browserTimeZone;
-  }
+					ApplicationUsers applicationusers = ApplicationUsers.getInstance();
+					applicationusers.addSessionsBasedOnUserName(employee.getUserName(), FacesContextUtil.getSession());
 
-  public void setBrowserTimeZone(String browserTimeZone) {
-    this.browserTimeZone = browserTimeZone;
-  }
+					// ----------- [END] --------------
 
-  public void signIn() {
+					employee.setSessionId(FacesContextUtil.getSessionId());
 
-    if (!multiple) {
-      if (getSystemUser().getUserName() == null
-          || getSystemUser().getUserName().trim().length() == 0) {
-        MessageRender.addWarningMessage("msg.user.required");
-      }
-      if (getSystemUser().getPassword() == null
-          || getSystemUser().getPassword().trim().length() == 0) {
-        MessageRender.addWarningMessage("msg.password.required");
-      }
+					// sets user to session and redirect to page
+					redirectToHome(employee);
+					multiple = true;
+				} catch (BusinessServiceException e) {
+					logger.error(e.getMessage(), e);
+					MessageRender.addErrorMessageDirectly(e.getMessage());
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+					MessageRender.addErrorMessage("msg.system.error");
+				}
+			}
+		}
+	}
 
-      if (FacesContextUtil.getFacesContext().getMessageList().isEmpty()) {
-        try {
-          getSystemUser().setTimeZone(browserTimeZone);
-          SystemUser systemUser = getUserServiceImpl().doLoginAthenticate(getSystemUser());
+	private void redirectToHome(Employee employee) throws IOException {
+		String path;
+		path = LoginUtils.getPath(employee);
+		FacesContextUtil.setSessionAttribute("user", employee);
+		FacesContextUtil.getFacesContext().getExternalContext().redirect(path);
 
-          // *** Do the Login Updation in Application File [START]
-          // *****
+	}
 
-          ApplicationUsers applicationusers = ApplicationUsers.getInstance();
-          boolean activeUser = applicationusers.isActiveSystemUser(systemUser);
-          if (activeUser) {
-            applicationusers.removeActiveSystemUser(systemUser);
-          }
-          applicationusers.addActiveSystemUser(systemUser);
-          applicationusers.addSessionsBasedOnUserName(systemUser.getUserName(),
-              FacesContextUtil.getSession());
-
-          // ----------- [END] --------------
-
-          systemUser.setSessionId(FacesContextUtil.getSessionId());
-          systemUser.setTimeZone(
-              systemUser.isValidEmployee() ? systemUser.getEmployee().getTimeZone() : null);
-          systemUser.setLocation(FacesContextUtil.getClientCountry());
-          systemUser.setLocale(FacesContextUtil.getClientLocale());
-          systemUser.setIp(FacesContextUtil.getCurrentClientIP());
-          if (rememberMe) {
-            saveUserDetailsInCookies(this.systemUser);
-          }
-
-          // sets user to session and redirect to page
-          redirectToHome(systemUser);
-          multiple = true;
-        } catch (BusinessServiceException e) {
-          logger.error(e.getMessage(), e);
-          MessageRender.addErrorMessageDirectly(e.getMessage());
-        } catch (Exception e) {
-          logger.error(e.getMessage(), e);
-          MessageRender.addErrorMessage("msg.system.error");
-        }
-      }
-    }
-  }
-
-  private void redirectToHome(SystemUser systemUser) throws Exception {
-    String path;
-    if (systemUser.getIsFirstLogin() != null && systemUser.getIsFirstLogin()) {
-      path = "admin/pages/setPassword.xhtml";
-    } else {
-      path = LoginUtils.getPath(systemUser);
-    }
-
-    FacesContextUtil.setSessionAttribute("user", systemUser);
-    FacesContextUtil.setSessionAttribute("organization",
-        systemUser.getEmployee().getOrganization());
-    FacesContextUtil.setSessionAttribute("employeeTimeZone",
-        systemUser.getEmployee().getTimeZone());
-    FacesContextUtil.getFacesContext().getExternalContext().redirect(path);
-  }
-
-  public void forgetPassword() {
-    if (StringUtils.isBlank(getForgotSystemUser().getUserName())) {
-      MessageRender.addWarningMessage("msg.user.required");
-    }
-
-    try {
-      systemUser = userServiceImpl.doGetSystemUserByUserName(getForgotSystemUser().getUserName());
-      if (systemUser == null) {
-        MessageRender.addErrorMessage("msg.user.notexist");
-      } else if (!systemUser.getIsActive()) {
-        MessageRender.addWarningMessage("msg.user.status.inactive");
-      } else {
-        if (FacesContextUtil.getFacesContext().getMessageList().isEmpty()) {
-          try {
-            getUserServiceImpl().doForgetPassword(getForgotSystemUser(),
-                FacesContextUtil.getServerName(), FacesContextUtil.getServerPort(),
-                FacesContextUtil.getContextPath());
-            MessageRender.addInfoMessage("msg.email.sent");
-          } catch (BusinessServiceException e) {
-            logger.error(e.getMessage(), e);
-            if (!e.getMessage().contains("Invalid")) {
-              MessageRender.addErrorMessage("msg.user.password.sent.fails");
-            } else {
-              MessageRender.addErrorMessage(e.getMessage());
-            }
-
-          }
-        }
-      }
-    } catch (BusinessServiceException e) {
-      logger.error(e.getMessage(), e);
-    }
-  }
-
-  public void resetFields() {
-    setSystemUser(new SystemUser());
-    setForgotSystemUser(new SystemUser());
-  }
-
-  public String switchActualUser() {
-
-    String path;
-    SystemUser currentUser = FacesContextUtil.getValueFromSession("actualUser");
-    FacesContextUtil.setSessionAttribute("user", currentUser);
-    path = "home" + BaseConstants.REDIRECT;
-    FacesContextUtil.removeAttributeFromSession("menuBean");
-    FacesContextUtil.removeAttributeFromSession("actualUser");
-    return path;
-  }
-
-  /**
-   * This for Save The User Name/Password Into The Cookies
-   * 
-   * @author [MUTHU G.K]
-   */
-  public void saveUserDetailsInCookies(SystemUser systemUser) {
-    if (systemUser != null) {
-      FacesContext.getCurrentInstance().getExternalContext().addResponseCookie("eInUN",
-          systemUser.getUserName(), null);
-      FacesContext.getCurrentInstance().getExternalContext().addResponseCookie("eInUP",
-          systemUser.getPassword(), null);
-    }
-  }
-
-  /**
-   * This for Get The User Name/Password From The Cookies
-   * 
-   * @author [MUTHU G.K]
-   */
-  public void doGetUserDetailsFromCookies(SystemUser systemUser) {
-    if (systemUser != null) {
-      Map<String, Object> cookiMap =
-          FacesContext.getCurrentInstance().getExternalContext().getRequestCookieMap();
-
-      if (cookiMap != null) {
-        Cookie nameCookie = (Cookie) cookiMap.get("eInUN");
-        Cookie pswCookie = (Cookie) cookiMap.get("eInUP");
-
-        systemUser.setUserName((nameCookie == null || nameCookie.getValue() == null
-            || nameCookie.getValue().trim().length() == 0) ? null : nameCookie.getValue());
-        systemUser.setPassword((pswCookie == null || pswCookie.getValue() == null
-            || pswCookie.getValue().trim().length() == 0) ? null : pswCookie.getValue());
-      }
-
-    }
-  }
-
-  public void reSetForgetPsw() {
-    forgotSystemUser = new SystemUser();
-  }
 }

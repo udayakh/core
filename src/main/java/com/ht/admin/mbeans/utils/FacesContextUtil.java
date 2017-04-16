@@ -24,8 +24,8 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
-import com.revature.shared.remote.resources.RemoteResourceService;
-import com.revature.shared.utils.ApplicationContextUtils;
+import com.ht.shared.remote.resources.RemoteResourceService;
+import com.ht.shared.utils.ApplicationContextUtils;
 
 /**
  * FacesContextUtil for jsf components.
