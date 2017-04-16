@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd 
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.1.xsd">
+
+	<!-- Properties Start -->
+	<bean id="applicationProperties"
+		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+		<property name="location" value="classpath:application.properties"></property>
+		<property name="properties">
+			<props>
+				<!-- JDBC Properties -->
+				<prop key="development.jdbc.url">#{ systemEnvironment["JDBC_URL"] }</prop>
+				<prop key="development.jdbc.username">#{ systemEnvironment["JDBC_USERNAME"] }</prop>
+				<prop key="development.jdbc.password">#{ systemEnvironment["JDBC_PASSWORD"] }</prop>
+
+				<!-- Schema for Hibernate -->
+				<prop key="development.hibernate.default_schema">#{ systemEnvironment["HIBERNATE_DEFAULT_SCHEMA"] }
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<context:property-placeholder
+		properties-ref="applicationProperties" />
+
+	<!-- Properties End -->
+
+	<!-- Spring application context provider -->
+	<bean id="applicationContextUtils" class="com.ht.shared.utils.ApplicationContextUtils" />
+
+	<!-- Our go-to executor for asynchronous tasks. -->
+	<task:executor id="executor" 
+		pool-size="1-30" 
+		queue-capacity="0" 
+		rejection-policy="CALLER_RUNS"
+		keep-alive="60" />
+
+
+	<!-- Business and Data component annotated package to be scanned -->
+	<bean id="propertiesFileUtils" class="com.ht.shared.utils.PropertiesFileUtils" />
+	<context:component-scan base-package="com.ht.shared" />
+	<context:component-scan base-package="com.ht.admin.mbeans" />
+
+	<!-- recommended to use only for development. For production, this should 
+		be disabled. -->
+	<bean id="mySQLdataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${${mode}.jdbc.driverClassName}" />
+		<property name="url" value="${${mode}.jdbc.url}" />
+		<property name="username" value="${${mode}.jdbc.username}" />
+		<property name="password" value="${${mode}.jdbc.password}" />
+	</bean>
+
+
+	<!-- SessionFactory configured for MS SQL Server -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="mySQLdataSource" />
+		<property name="packagesToScan" value="com.ht.shared.models" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${${mode}.hibernate.dialect}</prop>
+				<prop key="hibernate.default_schema">${${mode}.hibernate.default_schema}</prop>
+				<prop key="hibernate.show_sql">${${mode}.hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${${mode}.hibernate.format_sql}</prop>
+				<prop key="hibernate.use_sql_comments">${${mode}.hibernate.use_sql_comments}</prop>
+				<prop key="hibernate.generate_statistics">${${mode}.hibernate.generate_statistics}</prop>
+				<prop key="hibernate.connection.autocommit">false</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- TransactionManager configured into the application server -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- Transaction annotated class scanned -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<!-- AOP Aspect Enable -->
+	<aop:aspectj-autoproxy />
+
+
+	<!-- For inject theRequest handler -->
+<!-- 	<bean
+		class="com.revature.revtek.restservices.interceptor.RequestHandlerInterceptor" />
+ -->
+	<!-- Aspect -->
+	<!-- <bean id="loggingAspect" class="com.ht.shared.aspects.LoggingAspect" /> -->
+
+	<tx:advice id="defaultTxAdvice">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" rollback-for="BusinessServiceException,RuntimeException" />
+		</tx:attributes>
+	</tx:advice>
+
+	<aop:config>
+		<aop:pointcut expression="execution(public * com.ht.shared.biz..impl.*.*(..))"
+			id="defaultServiceOperation" />
+		<aop:advisor advice-ref="defaultTxAdvice" pointcut-ref="defaultServiceOperation" />
+	</aop:config>
+
+
+	<!-- rest configuration -->
+	<context:component-scan base-package="com.ht.client" />
+	<context:component-scan base-package="com.ht.admin.restcontroller" />
+	
+	<!-- If the request has a valid token, 
+		the intercepter allows the request to continue down the execution chain -->
+	<!-- We want the interceptor to process a request's JWT and pass userId and isActive as 
+		request attributes. -->
+
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter" />
+			<bean
+				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="prettyPrint" value="true">
+				</property>
+			</bean>
+			<bean
+				class="org.springframework.http.converter.ResourceHttpMessageConverter" />
+			<bean
+				class="org.springframework.http.converter.xml.SourceHttpMessageConverter" />
+			<bean
+				class="org.springframework.http.converter.xml.XmlAwareFormHttpMessageConverter" />
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+	<context:annotation-config />
+	<mvc:default-servlet-handler />
+	<bean
+		class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="mediaTypes">
+			<map>
+				<entry key="atom" value="application/atom+xml" />
+				<entry key="html" value="text/html" />
+				<entry key="json" value="application/json" />
+				<entry key="xml" value="application/xml" />
+			</map>
+		</property>
+
+		<property name="defaultViews">
+			<list>
+				<bean
+					class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+			</list>
+		</property>
+	</bean>
+	<bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView">
+		<property name="modelKey" value="response" />
+	</bean>
+	<bean id="annotationMethodHandlerExceptionResolver"
+		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerExceptionResolver">
+		<property name="order" value="0" />
+	</bean>
+
+</beans>
