@@ -104,27 +104,6 @@ public class BusinessUtils {
 	}
 
 	/**
-	 * This method used to uploadFile.
-	 */
-	public void uploadFile(FileDetails fileDetails) {
-		try (InputStream inputStream = fileDetails.getInputStream()) {
-			FileUtils fileUtils = ApplicationContextUtils.getBean("fileUtils");
-			fileUtils.saveFile(fileDetails.getFilePath(), fileDetails.getFileName(), IOUtils.toByteArray(inputStream));
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-		}
-	}
-
-	public void deleteFile(String filePath) {
-		FileUtils fileUtils = ApplicationContextUtils.getBean("fileUtils");
-		try {
-			fileUtils.deleteFile(filePath, "");
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-		}
-	}
-
-	/**
 	 * This method used to getResponse.
 	 */
 	public String getResponse(String url, String params) {
