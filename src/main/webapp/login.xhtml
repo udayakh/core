@@ -8,12 +8,13 @@
 <h:head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 	<meta charset="utf-8" />
-	<title>Login Page - Ace Admin</title>
+	<title>Login Page - Admin</title>
 
 	<meta name="description" content="User login page" />
 	<meta name="viewport"
 		content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
+	
 	<!-- bootstrap & fontawesome -->
 	<link rel="stylesheet" href="resource/assets/css/bootstrap.css" />
 	<link rel="stylesheet" href="resource/assets/css/font-awesome.css" />
@@ -24,24 +25,70 @@
 	<!-- ace styles -->
 	<link rel="stylesheet" href="resource/assets/css/ace.css" />
 
-	<!--[if lte IE 9]>
-			<link rel="stylesheet" href="../assets/css/ace-part2.css" />
-		<![endif]-->
+	<!--[if lte IE 9]-->
+	<link rel="stylesheet" href="resource/assets/css/ace-part2.css" />
+	<!--[endif]-->
 	<link rel="stylesheet" href="resource/assets/css/ace-rtl.css" />
 
-	<!--[if lte IE 9]>
-		  <link rel="stylesheet" href="resource/assets/css/ace-ie.css" />
-		<![endif]-->
+	<!--[if lte IE 9]-->
+	<link rel="stylesheet" href="resource/assets/css/ace-ie.css" />
+	<!--[endif]-->
 
 	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 
-	<!--[if lt IE 9]>
-		<script src="../assets/js/html5shiv.js"></script>
-		<script src="../assets/js/respond.js"></script>
-		<![endif]-->
+	<!--[if lt IE 9]-->
+	<script src="resource/assets/js/html5shiv.js"></script>
+	<script src="resource/assets/js/respond.js"></script>
+	<!--[endif]-->
+
+	<link rel="stylesheet" href="resource/css/style.css" />
+	<!--  For Progress bar [Start] -->
+	<script src="resource/assets/js/jquery.js"></script>
+	<script src="resource/assets/js/loader/jquery.showLoading.min.js"></script>
+	<style type="text/css">
+.loading-indicator {
+	height: 80px;
+	width: 80px;
+	background: url('resource/assets/img/loading1.gif') no-repeat center
+		center;
+}
+
+.loading-indicator-overlay {
+	background-color: #FFFFFF;
+	opacity: 0.6;
+	filter: alpha(opacity = 60);
+}
+</style>
+
+	<script type="text/javascript">
+		function start() {
+			$(function() {
+				var $body = $('body');
+				$body.showLoading();
+			});
+		}
+
+		function stop() {
+			$(function() {
+				var $body = $('body');
+				$body.hideLoading();
+				$('h3.finished').removeClass('hidden');
+				$('h3.active').addClass('hidden');
+			});
+		}
+	</script>
+	<!-- [End] -->
+	<!-- To Know the JSF event, we need its Library Tag Reference [Start] -->
+	<h:outputScript library="javax.faces" name="jsf.js" target="head" />
+	<script type="text/javascript" src="resource/assets/js/moment.js" />
+	<script type="text/javascript"
+		src="resource/assets/js/moment-timezone-with-data.min.js" />
 </h:head>
 
 <h:body class="login-layout">
+<f:view>
+		<h:form id="loginForm">
+	
 	<div class="main-container">
 		<div class="main-content">
 			<div class="row">
@@ -49,7 +96,7 @@
 					<div class="login-container">
 						<div class="center">
 							<h1>
-								<i class="ace-icon fa fa-leaf green"></i> <span class="red">Ace</span>
+								<i class="ace-icon fa fa-leaf green"></i> <span class="red">Hotel Management</span>
 								<span class="white" id="id-text2">Application</span>
 							</h1>
 						</div>
@@ -67,38 +114,62 @@
 										</h4>
 
 										<div class="space-6"></div>
+													<h:messages id="loginMsg"
+													errorClass="alert alert-danger fade in"
+													infoClass="alert alert-info fade in"
+													warnClass="alert alert-warning fade in" globalOnly="true"
+													style="list-style-type: none" />
 
-										<form>
 											<fieldset>
-												<label class="block clearfix"> <span
-													class="block input-icon input-icon-right"> <input
-														type="text" class="form-control" placeholder="Username" />
-														<i class="ace-icon fa fa-user"></i>
-												</span>
-												</label> <label class="block clearfix"> <span
-													class="block input-icon input-icon-right"> <input
-														type="password" class="form-control"
-														placeholder="Password" /> <i class="ace-icon fa fa-lock"></i>
-												</span>
-												</label>
+											<h:panelGroup id="Login_Panel">
+												<div class="row">
+															<div class="col-sm-12">
+																<label class="block clearfix"> <span
+																	class="block input-icon input-icon-right"> <h:inputText
+																			j:placeholder="Username" id="userName-input-id"
+																			value="#{loginBean.employee.userName}"
+																			required="true"
+																			requiredMessage="Username is required"
+																			styleClass="form-control" tabindex="1" /> <i
+																		class="ace-icon fa fa-user"></i>
+																</span> <h:message for="userName-input-id"
+																		styleClass="jsf-error-msg" />
+																</label>
+															</div>
+														</div>
 
-												<div class="space"></div>
+												<div class="row">
+															<div class="col-sm-12">
+																<label class="block clearfix"> <span
+																	class="block input-icon input-icon-right"> <h:inputSecret
+																			id="input-psw" j:placeholder="Password"
+																			value="#{loginBean.employee.password}"
+																			styleClass="form-control" required="true"
+																			requiredMessage="Password is required"
+																			tabindex="2" /> <i class="ace-icon fa fa-lock"></i>
+																</span> <h:message for="input-psw" styleClass="jsf-error-msg" />
+																</label>
+															</div>
+														</div>
+
+														<div class="space"></div>
+
 
 												<div class="clearfix">
-													<label class="inline"> <input type="checkbox"
-														class="ace" /> <span class="lbl"> Remember Me</span>
-													</label>
-
-													<button type="button"
-														class="width-35 pull-right btn btn-sm btn-primary">
-														<i class="ace-icon fa fa-key"></i> <span
-															class="bigger-110">Login</span>
-													</button>
-												</div>
+													
+													<h:commandLink action="#{loginBean.signIn}" value="Login"
+																tabindex="4" id="login-btn-id"
+																styleClass="width-35 pull-right btn btn-sm btn-primary">
+																<i class="ace-icon fa fa-lock"></i>
+																<f:ajax execute="loginForm:Login_Panel"
+																	render="loginForm" />
+															</h:commandLink>
+													</div>
 
 												<div class="space-4"></div>
+												</h:panelGroup>
 											</fieldset>
-										</form>
+										
 
 										<div class="social-or-login center">
 											<span class="bigger-110">Or Login Using</span>
@@ -326,5 +397,31 @@
 
 		});
 	</script>
+	<h:panelGroup id="script-panel-id">
+				<script type="text/javascript">
+					// ------------ Script for The Enter Key Event ----[STARTS]
+					$("#loginForm\\:userName-input-id").focus();
+					$('#login-box').keypress(function(e) {
+						if (e.which == 13) {
+							$('#loginForm\\:login-btn-id').click();
+						}
+					});
+
+					function backTologIn() {
+						$("#loginForm\\:userName-input-id").focus();
+					}
+
+					$('#forgot-box').keypress(function(e) {
+						if (e.which == 13) {
+							$('#loginForm\\:forget-password-btn').click();
+						}
+					});
+
+					//----------- [ENDS] ------------
+				</script>
+			</h:panelGroup>
+	</h:form>
+	</f:view>
 </h:body>
+
 </html>

@@ -12,7 +12,7 @@ import com.ht.shared.models.Employee;
 /**
  * This For The Application Logged in and LoggedOut User's Details Maintainance
  * 
- * @author MUTHU G.K
+ * @author Udaya kumar
  *
  */
 public class ApplicationUsers {
